@@ -4,6 +4,9 @@
 import pygame
 from pygame.draw import *
 from enum import Enum
+from PIL import Image, ImageFilter
+from os import remove
+from time import sleep
 
 
 screen = pygame.display.set_mode((800, 900))
@@ -33,7 +36,7 @@ def alien_ship(x: int, y: int, size: float = 1) -> None:
     рекомендованы значения [0, 2]
     """
     #TODO: Создать отдельную поверхность для рисунка, и масштабировать его
-    # через pygame.transform.scal(surface, (width, height))
+    # через pygame.transform.smoothscale(surface, (width, height))
     # вместо расчета размера каждого элемента рисунка
     #
     # Полупрозрачный квадрат света от тарелки
@@ -69,18 +72,34 @@ def alien_ship(x: int, y: int, size: float = 1) -> None:
 
 def dim_grey_cloud(left, top) -> None:
     """Рисует облако серого цвета"""
-    ellipse(screen, Color.DIM_GREY.value, (left, top, 800, 150))
+    surface0 = pygame.Surface((window_size[0], window_size[1]), pygame.SRCALPHA)
+    ellipse(surface0, Color.DIM_GREY.value, (left, top, 800, 150))
+    pygame.image.save(surface0, "aga.png")
+    sleep(0.1)
+    blured = Image.open("aga.png").filter(ImageFilter.GaussianBlur(radius=50))
+    surface0 = pygame.image.fromstring(blured.tobytes(), (window_size[0],
+                                                          window_size[1]),
+                                       blured.mode)
+    screen.blit(surface0, (0, 0))
 
 
 def dark_grey_cloud(left: int, top: int) -> None:
     """Рисует облако темно-серого цвета"""
-    ellipse(screen, Color.BLACK_GREY.value, (left, top, 800, 150))
-
+    surface0 = pygame.Surface((window_size[0], window_size[1]), pygame.SRCALPHA)
+    ellipse(surface0, Color.DARK_GREY.value, (left, top, 800, 150))
+    pygame.image.save(surface0, "aga.png")
+    sleep(0.1)
+    blured = Image.open("aga.png").filter(ImageFilter.GaussianBlur(radius=50))
+    surface0 = pygame.image.fromstring(blured.tobytes(), (window_size[0],
+                                                          window_size[1]),
+                                       blured.mode)
+    screen.blit(surface0, (0, 0))
 
 def clouds() -> None:
     """Заполняет небо серыми и темно-серымы облаками."""
-    #TODO: Размыть облака
-    # https://stackoverflow.com/questions/30723253/blurring-in-pygame
+    # TODO: в функциях dim_grey_cloud и dark_grey_cloud произвести оптимизацию
+    # (повторяющийся код) и найти способ буферного хранения Image в строке
+    # а не в файле aga.png
     dim_grey_cloud(550, -40)
     dim_grey_cloud(-250, 50)
     dim_grey_cloud(-400, 100)
@@ -90,6 +109,7 @@ def clouds() -> None:
     dark_grey_cloud(200, 100)
     dark_grey_cloud(-500, 200)
     dark_grey_cloud(250, 370)
+    remove("aga.png")
 
 
 def yellow_ellipse(surface0, left: int, top: int, w: int, h: int) -> None:
@@ -186,7 +206,8 @@ def alien(x: int, y: int, size: float = 1, revers: bool = 0) -> None:
     yellow_ellipse(surface0, 75, 230, 20, 50)
     yellow_ellipse(surface0, 90, 265, 20, 20)
     if size != 1:
-        surface0 = pygame.transform.scale(surface0, (200 * size, 300 * size))
+        surface0 = pygame.transform.smoothscale(surface0, (200 * size,
+                                                           300 * size))
     if revers:
         surface0 = pygame.transform.flip(surface0, 1, 0)
     screen.blit(surface0, (x, y))
@@ -194,7 +215,7 @@ def alien(x: int, y: int, size: float = 1, revers: bool = 0) -> None:
 
 def main() -> None:
     pygame.init()
-    #TODO: Вместо фигур сделать заливку поверхности screen
+    #TODO: Вместо фигур сделать заливку поверхности screen через fill
     rect(screen, Color.OLIVE.value,
          (0, window_size[1]/2 + 100, window_size[0], window_size[1]/2 - 100),
          width=0)
@@ -205,8 +226,10 @@ def main() -> None:
     circle(screen, Color.WHITE.value,
            (window_size[0] - window_size[0]/3, window_size[1]/4), 120)
     clouds()
+    alien(150, 500, 0.5, 1)
     alien_ship(100, 400)
     alien(500, 500, 1, 0)
+    alien_ship(350, 500, 0.2)
     pygame.display.flip()
     try:
         while True:
