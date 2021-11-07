@@ -39,7 +39,7 @@ def alien_ship(x: int, y: int, size: float = 1) -> None:
     # через pygame.transform.smoothscale(surface, (width, height))
     # вместо расчета размера каждого элемента рисунка
     #
-    # Полупрозрачный квадрат света от тарелки
+    # Полупрозрачный треугольник света от тарелки
     # Создается новая поверхность surface - копия
     # текущего изображения на экране с новым форматом для
     # попиксельной обработки
@@ -228,6 +228,7 @@ def main() -> None:
     clouds()
     alien(150, 500, 0.5, 1)
     alien_ship(100, 400)
+    alien_ship(200, 400)
     alien(500, 500, 1, 0)
     alien_ship(350, 500, 0.2)
     pygame.display.flip()
