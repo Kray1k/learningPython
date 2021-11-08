@@ -5,7 +5,7 @@ import pygame
 from pygame.draw import *
 from enum import Enum
 
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((600, 600))
 window_size = pygame.display.get_window_size()
 smile_size = int()
 
@@ -20,6 +20,28 @@ def head(surface) -> None:
     r = smile_size / 2
     circle(surface, Color.YELLOW.value, (smile_size/2, smile_size/2), r)
     circle(surface, Color.YELLOW.value, (smile_size/2, smile_size/2), r, 2)
+
+
+def brow_left(surface) -> None:
+    left = 0
+    top = smile_size/6 - smile_size/16
+    width = smile_size/2
+    height = smile_size/14
+    surface0 = pygame.Surface((width, height), pygame.SRCALPHA)
+    rect(surface0, Color.BLACK.value, (0, 0, width, height))
+    surface0 = pygame.transform.rotate(surface0, -25)
+    surface.blit(surface0, (left, top))
+
+
+def brow_right(surface) -> None:
+    left = smile_size/2
+    top = smile_size/6 - smile_size/16
+    width = smile_size/2
+    height = smile_size/14
+    surface0 = pygame.Surface((width, height), pygame.SRCALPHA)
+    rect(surface0, Color.BLACK.value, (0, 0, width, height))
+    surface0 = pygame.transform.rotate(surface0, 32)
+    surface.blit(surface0, (left, top))
 
 
 def eyes(surface) -> None:
@@ -67,10 +89,13 @@ def angry_smile() -> None:
     head(surface)
     mouth(surface)
     eyes(surface)
+    brow_left(surface)
+    brow_right(surface)
     screen.blit(surface, xy)
 
 
 def main():
+    screen.fill((255, 255, 255))
     pygame.init()
     angry_smile()
 
