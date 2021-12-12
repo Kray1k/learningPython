@@ -5,7 +5,7 @@ import pygame
 from pygame.draw import *
 from random import randint
 
-FPS = 2
+FPS = 1
 screen = pygame.display.set_mode((900, 600))
 
 RED = (255, 0, 0)
@@ -38,10 +38,9 @@ class Ball(pygame.sprite.Sprite):
 
 
 
-    def mouse_in_ball(self) -> bool:
-        mouse_pos = pygame.mouse.get_pos()
-        if (self.pos[0]-mouse_pos[0])**2 + \
-                (self.pos[1]-mouse_pos[1])**2<= self.r**2:
+    def mouse_in_ball(self, event) -> bool:
+        if (self.pos[0] - event.pos[0])**2 + \
+                (self.pos[1] - event.pos[1])**2<= self.r**2:
             return True
         return False
 
@@ -64,7 +63,7 @@ class Player:
 def main():
     clock = pygame.time.Clock()
     finished = False
-    #player = Player(input("Введите имя игрока: "))
+    player = Player(input("Введите имя игрока: "))
     pygame.init()
     pygame.display.flip()
     ball = Ball(screen)
@@ -77,14 +76,14 @@ def main():
                 if event.key == pygame.K_ESCAPE or event.unicode == 'q':
                     finished = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if ball.mouse_in_ball():
+                if ball.mouse_in_ball(event):
                     print("CLICK")
-                    #player.add_points(1)
+                    player.add_points(1)
         ball.new_ball()
         pygame.display.flip()
         screen.fill(BLACK)
     pygame.quit()
-    #print("Игрок", player.get_name(), "набрал", player.get_points(), "очка(ов)")
+    print("Игрок", player.get_name(), "набрал", player.get_points(), "очка(ов)")
 
 
 if __name__ == "__main__":
