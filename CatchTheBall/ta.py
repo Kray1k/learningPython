@@ -11,10 +11,9 @@ except:
     pygame.draw.circle(ballImage, (255, 255, 0), (size//2, size//2), size//2)
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, startpos, velocity, startdir):
+    def __init__(self, startpos, startdir):
         super().__init__()
         self.pos = pygame.math.Vector2(startpos)
-        self.velocity = velocity
         self.dir = pygame.math.Vector2(startdir).normalize()
         self.image = ballImage
         self.rect = self.image.get_rect(center = (round(self.pos.x), round(self.pos.y)))
@@ -45,11 +44,11 @@ clock = pygame.time.Clock()
 
 all_balls = pygame.sprite.Group()
 
-start, velocity, direction = (100, 100), 10, (random.random(), random.random())
-ball_1 = Ball(start, velocity, direction)
+start, direction = (100, 100), (random.random(), random.random())
+ball_1 = Ball(start, direction)
 
-start, velocity, direction = (300, 300), 10, (random.random(), random.random())
-ball_2 = Ball(start, velocity, direction)
+start, direction = (300, 300), (random.random(), random.random())
+ball_2 = Ball(start, direction)
 
 all_balls.add(ball_1, ball_2)
 
