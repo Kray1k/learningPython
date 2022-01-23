@@ -6,7 +6,7 @@ from pygame.draw import *
 from random import randint
 
 FPS = 25
-screen = pygame.display.set_mode((900, 600))
+screen = pygame.display.set_mode((600, 600))
 
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -22,14 +22,27 @@ class Ball(pygame.sprite.Sprite):
         super().__init__()
         self.r = int(randint(32, 64))
         self.color = COLORS[randint(0, 5)]
-        self.velocity = randint(5, 30)
+        self.velocity = randint(5, 12)
         self.image = pygame.Surface((self.r, self.r), pygame.SRCALPHA)
         circle(self.image, self.color, (self.r//2, self.r//2), self.r//2)
-        self.pos = pygame.math.Vector2(randint(100, 700), randint(100, 500))
+        self.pos = pygame.math.Vector2(randint(100, screen.get_width()),
+                                       randint(100, screen.get_height()))
         self.rect = self.image.get_rect(center = self.pos)
         self.dir = pygame.math.Vector2(self.pos).normalize()
         self.rect = self.image.get_rect(center = (round(self.pos.x),
                                                   round(self.pos.y)))
+        self.timer = FPS * randint(1, 6)
+        self.init_timer = self.timer // FPS
+
+    def get_points(self):
+        points = 1;
+        if self.velocity > 8:
+            points += 1
+        if self.r < 48:
+            points += 1
+        if self.init_timer - self.timer/FPS < 1:
+            points += 1
+        return points
 
     def reflect(self, NV):
         self.dir = self.dir.reflect(pygame.math.Vector2(NV))
@@ -49,6 +62,7 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.bottom >= screen.get_height():
             self.reflect((0, -1))
             self.rect.bottom = screen.get_height()
+        self.timer -= 1
 
     def mouse_in_ball(self, event) -> bool:
         if ((event.pos[0]-self.pos[0])**2 +
@@ -71,15 +85,33 @@ class Player:
     def get_name(self) -> str:
         return self.__name
 
+    def remove_points(self, count):
+        self.__points -= count
+
+
+def reflectBalls(ball_1, ball_2):
+    v1 = pygame.math.Vector2(ball_1.rect.center)
+    v2 = pygame.math.Vector2(ball_2.rect.center)
+    r1 = ball_1.r//2
+    r2 = ball_2.r//2
+    d = v1.distance_to(v2)
+    if d < r1 + r2 - 2:
+        dnext = (v1 + ball_1.dir).distance_to(v2 + ball_2.dir)
+        nv = v2 - v1
+        if dnext < d and nv.length() > 0:
+            ball_1.reflect(nv)
+            ball_2.reflect(nv)
+
 
 def main():
     clock = pygame.time.Clock()
     finished = False
     player = Player("Test")#Player(input("Введите имя игрока: "))
+    spawn_time = int(FPS*0.5)
     pygame.init()
     pygame.display.flip()
     balls = pygame.sprite.Group()
-    balls.add(Ball(), Ball(), Ball(), Ball(), Ball(), Ball(), Ball(), Ball())
+    balls.add(Ball(), Ball(), Ball())
     while not finished:
         clock.tick(FPS)
         balls.update()
@@ -93,12 +125,23 @@ def main():
                 for ball in balls:
                     if ball.mouse_in_ball(event):
                         print("CLICK")
-                        player.add_points(1)
+                        player.add_points(ball.get_points())
                         balls.remove(ball)
-        #ball.new_ball()
+        balls_list = balls.sprites()
+        for i, ball1 in enumerate(balls_list[:-1]):
+            for ball2 in balls_list[i+1:]:
+                reflectBalls(ball1, ball2)
+        for ball in balls:
+            if ball.timer == 0:
+                balls.remove(ball)
+                player.remove_points(1)
         balls.draw(screen)
         pygame.display.flip()
         screen.fill(BLACK)
+        spawn_time -= 1
+        if spawn_time == 0:
+            balls.add(Ball())
+            spawn_time = int(FPS*0.5)
     pygame.quit()
     print("Игрок", player.get_name(), "набрал очков: ", player.get_points())
 
