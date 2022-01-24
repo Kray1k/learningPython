@@ -7,6 +7,13 @@ from random import randint
 
 FPS = 25
 screen = pygame.display.set_mode((600, 600))
+pygame.display.set_caption('Catch The Ball')
+
+validChars = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+shiftChars = '~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+
+
+shiftDown = False
 
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -89,6 +96,32 @@ class Player:
         self.__points -= count
 
 
+class TextBox(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.text = ""
+        pygame.font.init()
+        self.font = pygame.font.Font(None, 50)
+        self.image = self.font.render("Enter your name", False, [255, 255, 255])
+        self.rect = self.image.get_rect()
+
+    def add_chr(self, char):
+        global shiftDown
+        if char in validChars:
+            if shiftDown:
+                self.text += shiftChars[validChars.index(char)]
+            else:
+                self.text += char
+        self.update()
+        print(shiftDown)
+
+    def update(self):
+        old_rect_pos = self.rect.center
+        self.image = self.font.render(self.text, False, [255, 255, 255])
+        self.rect = self.image.get_rect()
+        self.rect.center = old_rect_pos
+
+
 def reflectBalls(ball_1, ball_2):
     v1 = pygame.math.Vector2(ball_1.rect.center)
     v2 = pygame.math.Vector2(ball_2.rect.center)
@@ -103,28 +136,60 @@ def reflectBalls(ball_1, ball_2):
             ball_2.reflect(nv)
 
 
+
 def main():
     clock = pygame.time.Clock()
-    finished = False
-    player = Player("Test")#Player(input("Введите имя игрока: "))
-    spawn_time = int(FPS*0.5)
+    running = True
+    
+	
     pygame.init()
     pygame.display.flip()
+
+    textBox = TextBox()
+    textBox.rect.center = [screen.get_width()//2, screen.get_height()//2]
+
+    while running:
+        clock.tick(FPS)
+        screen.fill([0, 0, 0])
+        screen.blit(textBox.image, textBox.rect)
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYUP:
+                if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]: # DONT WORK???
+                    shiftDown = False
+            if event.type == pygame.KEYDOWN:
+                textBox.add_chr(pygame.key.name(event.key))
+                if event.key == pygame.K_SPACE:
+                    textBox.text += " "
+                    textBox.update()
+                if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]: # DONT WORK???
+                    shiftDown = True
+                if event.key == pygame.K_BACKSPACE:
+                    textBox.text = textBox.text[:-1]
+                    textBox.update()
+                if event.key == pygame.K_RETURN:
+                    if len(textBox.text) > 0:
+                        running = False
+
+    running = True
+    player = Player(textBox.text)
+    spawn_time = int(FPS*0.5)
     balls = pygame.sprite.Group()
     balls.add(Ball(), Ball(), Ball())
-    while not finished:
+    while running:
         clock.tick(FPS)
         balls.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                finished = True
+                running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE or event.unicode == 'q':
-                    finished = True
+                    running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for ball in balls:
                     if ball.mouse_in_ball(event):
-                        print("CLICK")
                         player.add_points(ball.get_points())
                         balls.remove(ball)
         balls_list = balls.sprites()
@@ -142,9 +207,22 @@ def main():
         if spawn_time == 0:
             balls.add(Ball())
             spawn_time = int(FPS*0.5)
-    pygame.quit()
-    print("Игрок", player.get_name(), "набрал очков: ", player.get_points())
 
+    textBox.text = ("Игрок " + str(player.get_name()) + ": " + str(player.get_points()) + " очков")
+    textBox.update()
+    running = True
+    while running:
+        clock.tick(FPS)
+        screen.fill([0, 0, 0])
+        screen.blit(textBox.image, textBox.rect)
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE or event.unicode == 'q':
+                    running = False
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
