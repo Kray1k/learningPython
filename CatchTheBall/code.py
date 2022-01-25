@@ -5,7 +5,7 @@ import pygame
 from pygame.draw import *
 from random import randint
 
-FPS = 25
+FPS = 60
 screen = pygame.display.set_mode((600, 600))
 pygame.display.set_caption('Catch The Ball')
 validChars = "`1234567890-=qwertyuiopasdfghjkl'zxcvbnm,./ \
@@ -28,11 +28,11 @@ class Ball(pygame.sprite.Sprite):
         super().__init__()
         self.r = int(randint(32, 64))
         self.color = COLORS[randint(0, 5)]
-        self.velocity = randint(5, 12)
+        self.velocity = randint(2, 8)
         self.image = pygame.Surface((self.r, self.r), pygame.SRCALPHA)
         circle(self.image, self.color, (self.r//2, self.r//2), self.r//2)
-        self.pos = pygame.math.Vector2(randint(100, screen.get_width()),
-                                       randint(100, screen.get_height()))
+        self.pos = pygame.math.Vector2(randint(100, screen.get_width() - 100),
+                                       randint(100, screen.get_height() - 100))
         self.rect = self.image.get_rect(center = self.pos)
         self.dir = pygame.math.Vector2(self.pos).normalize()
         self.rect = self.image.get_rect(center = (round(self.pos.x),
@@ -42,7 +42,7 @@ class Ball(pygame.sprite.Sprite):
 
     def get_points(self):
         points = 1;
-        if self.velocity > 8:
+        if self.velocity > 4:
             points += 1
         if self.r < 48:
             points += 1
@@ -98,14 +98,13 @@ class Player:
             self.__points -= count
 
 
-
 class TextBox(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.text = ""
         pygame.font.init()
         self.font = pygame.font.Font(None, 50)
-        self.image = self.font.render("Enter your name", False, [255, 255, 255])
+        self.image = self.font.render("Введите имя игрока", False, [255, 255, 255])
         self.rect = self.image.get_rect()
 
     def add_chr(self, char):
@@ -113,12 +112,9 @@ class TextBox(pygame.sprite.Sprite):
         if char in validChars:
             if shiftDown:
                 self.text += shiftChars[validChars.index(char)]
-                print("ISDOWN")
             else:
                 self.text += char
-                print("NOTDOWN")
         self.update()
-        print('+', char, '+', sep='')
 
     def update(self):
         old_rect_pos = self.rect.center
@@ -179,6 +175,7 @@ def main():
     pygame.display.flip()
     textBox = TextBox()
     textBox.rect.center = [screen.get_width()//2, screen.get_height()//2]
+    global shiftDown
     while running:
         clock.tick(FPS)
         screen.fill([0, 0, 0])
@@ -188,17 +185,15 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYUP:
-                if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]: # DONT WORK???
+                if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]:
                     shiftDown = False
-                    print("NET")
             if event.type == pygame.KEYDOWN:
                 textBox.add_chr(pygame.key.name(event.key))
                 if event.key == pygame.K_SPACE:
                     textBox.text += " "
                     textBox.update()
-                if event.key in [pygame.K_LSHIFT, pygame.K_LSHIFT]: # DONT WORK???
+                if event.key in [pygame.K_LSHIFT, pygame.K_LSHIFT]:
                     shiftDown = True
-                    print("DA")
                 if event.key == pygame.K_BACKSPACE:
                     textBox.text = textBox.text[:-1]
                     textBox.update()
