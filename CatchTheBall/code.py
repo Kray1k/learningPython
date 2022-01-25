@@ -8,11 +8,10 @@ from random import randint
 FPS = 25
 screen = pygame.display.set_mode((600, 600))
 pygame.display.set_caption('Catch The Ball')
-
-validChars = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
-shiftChars = '~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
-
-
+validChars = "`1234567890-=qwertyuiopasdfghjkl'zxcvbnm,./ \
+    абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+shiftChars = '~!@#$%^&*()_+QWERTYUIOPASDFGHJKL"ZXCVBNM<>? \
+    АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
 shiftDown = False
 
 RED = (255, 0, 0)
@@ -93,7 +92,11 @@ class Player:
         return self.__name
 
     def remove_points(self, count):
-        self.__points -= count
+        if self.__points <= 0 or self.__points - count <= 0:
+            self.points = 0
+        else:
+            self.__points -= count
+
 
 
 class TextBox(pygame.sprite.Sprite):
@@ -110,10 +113,12 @@ class TextBox(pygame.sprite.Sprite):
         if char in validChars:
             if shiftDown:
                 self.text += shiftChars[validChars.index(char)]
+                print("ISDOWN")
             else:
                 self.text += char
+                print("NOTDOWN")
         self.update()
-        print(shiftDown)
+        print('+', char, '+', sep='')
 
     def update(self):
         old_rect_pos = self.rect.center
@@ -135,19 +140,45 @@ def reflectBalls(ball_1, ball_2):
             ball_1.reflect(nv)
             ball_2.reflect(nv)
 
+def newScoreToFile(name, newScore):
+    scores = list()
+    txt = None
+    try: 
+        txt = open('scores.txt', 'r')
+        txt.readline()
+        while True:
+            inp = txt.readline()
+            if inp:
+                scores.append(list(inp.split(': ')))
+                scores[-1][0] = scores[-1][0].split('. ')[1]
+                scores[-1][1] = scores[-1][1].replace('\n', '')
+            else:
+                break
+        scores.append([name, newScore])
+        scores.sort(key=lambda l: int(l[1]), reverse=True)
+        scores2 = [scores[0]]
+        for name, score in scores:
+            if name != scores2[-1][0]:
+                scores2.append([name, score])
+        scores = scores2
+        txt.close()
+        txt = open('scores.txt', 'w')
+    except FileNotFoundError:
+        txt = open('scores.txt', 'w')
+        scores.append([name,newScore])
+    txt.write('Список набранных игроками очков')
+    for i, score in enumerate(scores, start=1):
+        txt.write('\n' + str(i) + '. ' + score[0] + ': ' + str(score[1]))
+    txt.close()
 
 
 def main():
     clock = pygame.time.Clock()
     running = True
-    
-	
     pygame.init()
     pygame.display.flip()
-
     textBox = TextBox()
     textBox.rect.center = [screen.get_width()//2, screen.get_height()//2]
-
     while running:
         clock.tick(FPS)
         screen.fill([0, 0, 0])
@@ -159,20 +190,21 @@ def main():
             if event.type == pygame.KEYUP:
                 if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]: # DONT WORK???
                     shiftDown = False
+                    print("NET")
             if event.type == pygame.KEYDOWN:
                 textBox.add_chr(pygame.key.name(event.key))
                 if event.key == pygame.K_SPACE:
                     textBox.text += " "
                     textBox.update()
-                if event.key in [pygame.K_RSHIFT, pygame.K_LSHIFT]: # DONT WORK???
+                if event.key in [pygame.K_LSHIFT, pygame.K_LSHIFT]: # DONT WORK???
                     shiftDown = True
+                    print("DA")
                 if event.key == pygame.K_BACKSPACE:
                     textBox.text = textBox.text[:-1]
                     textBox.update()
                 if event.key == pygame.K_RETURN:
                     if len(textBox.text) > 0:
                         running = False
-
     running = True
     player = Player(textBox.text)
     spawn_time = int(FPS*0.5)
@@ -207,8 +239,9 @@ def main():
         if spawn_time == 0:
             balls.add(Ball())
             spawn_time = int(FPS*0.5)
-
-    textBox.text = ("Игрок " + str(player.get_name()) + ": " + str(player.get_points()) + " очков")
+    textBox.text = ("Игрок " + str(player.get_name()) + ": " +
+                    str(player.get_points()) + " очков")
+    newScoreToFile(player.get_name(), player.get_points())
     textBox.update()
     running = True
     while running:
