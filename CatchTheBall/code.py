@@ -46,8 +46,8 @@ class Ball(pygame.sprite.Sprite):
             points += 1
         if self.r < 48:
             points += 1
-        if self.init_timer - self.timer/FPS < 1:
-            points += 1
+        if self.init_timer - self.timer/FPS < 1:    # Шар прокликан меньше чем
+            points += 1                             # за секунду
         return points
 
     def reflect(self, NV):
@@ -104,7 +104,8 @@ class TextBox(pygame.sprite.Sprite):
         self.text = ""
         pygame.font.init()
         self.font = pygame.font.Font(None, 50)
-        self.image = self.font.render("Введите имя игрока", False, [255, 255, 255])
+        self.image = self.font.render("Введите имя игрока", False,
+                                      [255, 255, 255])
         self.rect = self.image.get_rect()
 
     def add_chr(self, char):
@@ -141,27 +142,27 @@ def newScoreToFile(name, newScore):
     txt = None
     try: 
         txt = open('scores.txt', 'r')
-        txt.readline()
+        txt.readline()      # Пропуск первой строки-заголовка
         while True:
             inp = txt.readline()
             if inp:
                 scores.append(list(inp.split(': ')))
-                scores[-1][0] = scores[-1][0].split('. ')[1]
-                scores[-1][1] = scores[-1][1].replace('\n', '')
-            else:
+                scores[-1][0] = scores[-1][0].split('. ')[1]    # Удаление
+                scores[-1][1] = scores[-1][1].replace('\n', '') # нумерации и
+            else:                                               # \n символа
                 break
         scores.append([name, newScore])
         scores.sort(key=lambda l: int(l[1]), reverse=True)
-        scores2 = [scores[0]]
-        for name, score in scores:
-            if name != scores2[-1][0]:
-                scores2.append([name, score])
+        scores2 = [scores[0]]                   # Удаление дубликата из списка
+        for name, score in scores:              # при отсортированном списке
+            if name != scores2[-1][0]:          # останется только рекорд
+                scores2.append([name, score])   # по очкам
         scores = scores2
         txt.close()
         txt = open('scores.txt', 'w')
-    except FileNotFoundError:
-        txt = open('scores.txt', 'w')
-        scores.append([name,newScore])
+    except FileNotFoundError:           # В случае если файл не существует
+        txt = open('scores.txt', 'w')   # Создается новый
+        scores.append([name, newScore])
     txt.write('Список набранных игроками очков')
     for i, score in enumerate(scores, start=1):
         txt.write('\n' + str(i) + '. ' + score[0] + ': ' + str(score[1]))
@@ -176,7 +177,7 @@ def main():
     textBox = TextBox()
     textBox.rect.center = [screen.get_width()//2, screen.get_height()//2]
     global shiftDown
-    while running:
+    while running:  # Процесс ввода имени игрока
         clock.tick(FPS)
         screen.fill([0, 0, 0])
         screen.blit(textBox.image, textBox.rect)
@@ -205,7 +206,7 @@ def main():
     spawn_time = int(FPS*0.5)
     balls = pygame.sprite.Group()
     balls.add(Ball(), Ball(), Ball())
-    while running:
+    while running:      # Основной процесс игры
         clock.tick(FPS)
         balls.update()
         for event in pygame.event.get():
@@ -220,26 +221,26 @@ def main():
                         player.add_points(ball.get_points())
                         balls.remove(ball)
         balls_list = balls.sprites()
-        for i, ball1 in enumerate(balls_list[:-1]):
-            for ball2 in balls_list[i+1:]:
+        for i, ball1 in enumerate(balls_list[:-1]): # Отслеживание
+            for ball2 in balls_list[i+1:]:          # столкновений шаров
                 reflectBalls(ball1, ball2)
-        for ball in balls:
-            if ball.timer == 0:
-                balls.remove(ball)
-                player.remove_points(1)
+        for ball in balls:              # Отслеживание таймера каждого шара
+            if ball.timer == 0:         # его удаление и -1 очко за
+                balls.remove(ball)      # пропущенный шар
+                player.remove_points(1) # TODO: Перенести в класс Ball
         balls.draw(screen)
         pygame.display.flip()
         screen.fill(BLACK)
         spawn_time -= 1
-        if spawn_time == 0:
-            balls.add(Ball())
+        if spawn_time == 0:     # Добавление нового шара по истечении
+            balls.add(Ball())   # таймера spawn_time
             spawn_time = int(FPS*0.5)
     textBox.text = ("Игрок " + str(player.get_name()) + ": " +
                     str(player.get_points()) + " очков")
     newScoreToFile(player.get_name(), player.get_points())
     textBox.update()
     running = True
-    while running:
+    while running:      # Вывод имени игрока и количество очков
         clock.tick(FPS)
         screen.fill([0, 0, 0])
         screen.blit(textBox.image, textBox.rect)
